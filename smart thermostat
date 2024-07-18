@@ -1,0 +1,91 @@
+#include <DHT.h>
+
+// Define pins
+#define DHTPIN 7      // Digital pin connected to the DHT sensor
+#define DHTTYPE DHT22 // DHT 22 (AM2302)
+
+// Define other pins
+const int relayPin = 8;    // Relay module connected to pin 8
+const int ledPin = 9;      // LED connected to pin 9
+const int fanPin = 10;     // Fan connected to pin 10
+const int buttonPin = 11;  // Button connected to pin 11
+const int buzzerPin = 12;  // Buzzer connected to pin 12
+
+// Initialize the DHT sensor
+DHT dht(DHTPIN, DHTTYPE);
+
+// Define temperature thresholds
+const float setpoint = 25.0; // Desired temperature in Celsius
+const float tolerance = 0.5; // Temperature tolerance
+
+void setup() {
+  // Initialize serial communication
+  Serial.begin(9600);
+
+  // Initialize the DHT sensor
+  dht.begin();
+
+  // Initialize pins
+  pinMode(relayPin, OUTPUT);
+  pinMode(ledPin, OUTPUT);
+  pinMode(fanPin, OUTPUT);
+  pinMode(buttonPin, INPUT_PULLUP); // Using internal pull-up resistor
+  pinMode(buzzerPin, OUTPUT);
+
+  // Ensure devices are off at the start
+  digitalWrite(relayPin, LOW);
+  digitalWrite(ledPin, LOW);
+  digitalWrite(fanPin, LOW);
+  digitalWrite(buzzerPin, LOW);
+}
+
+void loop() {
+  // Read temperature and humidity
+  float humidity = dht.readHumidity();
+  float temperature = dht.readTemperature();
+
+  // Check if any reads failed and exit early (to try again).
+  if (isnan(humidity) || isnan(temperature)) {
+    Serial.println("Failed to read from DHT sensor!");
+    return;
+  }
+
+  // Print temperature and humidity to the Serial Monitor
+  Serial.print("Humidity: ");
+  Serial.print(humidity);
+  Serial.print(" %\t");
+  Serial.print("Temperature: ");
+  Serial.print(temperature);
+  Serial.println(" *C");
+
+  // Control relay based on temperature
+  if (temperature < (setpoint - tolerance)) {
+    // Turn on heating device (relay on)
+    digitalWrite(relayPin, HIGH);
+    digitalWrite(ledPin, HIGH); // Turn on LED
+  } else if (temperature > (setpoint + tolerance)) {
+    // Turn off heating device (relay off)
+    digitalWrite(relayPin, LOW);
+    digitalWrite(ledPin, LOW); // Turn off LED
+  }
+
+  // Control fan based on humidity
+  if (humidity > 60.0) {
+    // Turn on fan
+    digitalWrite(fanPin, HIGH);
+  } else {
+    // Turn off fan
+    digitalWrite(fanPin, LOW);
+  }
+
+  // Check if the button is pressed
+  if (digitalRead(buttonPin) == LOW) {
+    // Activate buzzer for a short beep
+    digitalWrite(buzzerPin, HIGH);
+    delay(200);
+    digitalWrite(buzzerPin, LOW);
+  }
+
+  // Delay before the next reading
+  delay(2000);
+}
