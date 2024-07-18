@@ -1,0 +1,75 @@
+// Include necessary libraries
+#include <Servo.h>
+
+// Define pin numbers
+const int motionSensorPin = 2;    // Pin for the motion sensor
+const int lightPin = 3;           // Pin for the light (LED)
+const int tempSensorPin = A0;     // Pin for the temperature sensor (analog pin)
+const int fanPin = 9;             // Pin for the fan (PWM pin)
+
+// Thresholds for temperature control
+const int tempThreshold = 25;     // Temperature threshold in degrees Celsius
+
+// Variables to store sensor readings
+int motionState = LOW;            // Current state of motion sensor
+int tempReading;                  // Variable to store temperature reading
+
+// Create a Servo object for the fan
+Servo fan;
+
+void setup() {
+  // Initialize serial communication
+  Serial.begin(9600);
+
+  // Initialize pins
+  pinMode(motionSensorPin, INPUT);
+  pinMode(lightPin, OUTPUT);
+  fan.attach(fanPin);
+
+  // Initial state
+  digitalWrite(lightPin, LOW);
+  fan.write(0);
+}
+
+void loop() {
+  // Read motion sensor
+  motionState = digitalRead(motionSensorPin);
+  
+  if (motionState == HIGH) {
+    // Motion detected, turn on the light
+    digitalWrite(lightPin, HIGH);
+    Serial.println("Motion detected - Light ON");
+  } else {
+    // No motion, turn off the light
+    digitalWrite(lightPin, LOW);
+    Serial.println("No motion - Light OFF");
+  }
+
+  // Read temperature sensor
+  tempReading = analogRead(tempSensorPin);
+  
+  // Convert the analog reading to voltage
+  float voltage = tempReading * 5.0 / 1023.0;
+  
+  // Convert the voltage to temperature in Celsius
+  float temperature = (voltage - 0.5) * 100;
+  
+  // Print the temperature to the Serial Monitor
+  Serial.print("Temperature: ");
+  Serial.print(temperature);
+  Serial.println(" °C");
+
+  // Control the fan based on the temperature
+  if (temperature > tempThreshold) {
+    // If temperature is above threshold, turn on the fan
+    fan.write(180);  // Full speed
+    Serial.println("Temperature above threshold - Fan ON");
+  } else {
+    // If temperature is below threshold, turn off the fan
+    fan.write(0);    // Stop
+    Serial.println("Temperature below threshold - Fan OFF");
+  }
+  
+  // Small delay to avoid spamming the Serial Monitor
+  delay(1000);
+}
