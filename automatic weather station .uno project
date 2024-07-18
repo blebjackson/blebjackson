@@ -1,0 +1,79 @@
+#include <Wire.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_BMP085_U.h>
+#include <DHT.h>
+#include <DHT_U.h>
+
+// Define sensor pins
+#define DHTPIN 2       // Pin where the DHT22 is connected
+#define DHTTYPE DHT22  // Define the type of DHT sensor used
+
+// Initialize the DHT sensor
+DHT_Unified dht(DHTPIN, DHTTYPE);
+uint32_t delayMS;
+
+// Create an instance of the BMP180 sensor
+Adafruit_BMP085_Unified bmp = Adafruit_BMP085_Unified(10085);
+
+void setup() {
+  // Initialize serial communication
+  Serial.begin(9600);
+  Serial.println("Automatic Weather Station");
+
+  // Initialize the DHT22 sensor
+  dht.begin();
+  sensor_t sensor;
+  dht.temperature().getSensor(&sensor);
+  Serial.println(F("DHT22 Sensor"));
+  Serial.print(F("Sensor Type: ")); Serial.println(sensor.name);
+  Serial.print(F("Driver Ver:  ")); Serial.println(sensor.version);
+  Serial.print(F("Unique ID:   ")); Serial.println(sensor.sensor_id);
+  Serial.print(F("Max Value:   ")); Serial.print(sensor.max_value); Serial.println(F("°C"));
+  Serial.print(F("Min Value:   ")); Serial.print(sensor.min_value); Serial.println(F("°C"));
+  Serial.print(F("Resolution:  ")); Serial.print(sensor.resolution); Serial.println(F("°C"));
+
+  // Set delay between sensor readings
+  delayMS = sensor.min_delay / 1000;
+
+  // Initialize the BMP180 sensor
+  if(!bmp.begin())
+  {
+    Serial.print("Could not find a valid BMP180 sensor, check wiring!");
+    while (1);
+  }
+}
+
+void loop() {
+  // Delay between measurements
+  delay(delayMS);
+
+  // Get temperature and humidity from DHT22
+  sensors_event_t event;
+  dht.temperature().getEvent(&event);
+  if (isnan(event.temperature)) {
+    Serial.println(F("Error reading temperature!"));
+  } else {
+    Serial.print(F("Temperature: "));
+    Serial.print(event.temperature);
+    Serial.println(F("°C"));
+  }
+  dht.humidity().getEvent(&event);
+  if (isnan(event.relative_humidity)) {
+    Serial.println(F("Error reading humidity!"));
+  } else {
+    Serial.print(F("Humidity: "));
+    Serial.print(event.relative_humidity);
+    Serial.println(F("%"));
+  }
+
+  // Get pressure from BMP180
+  sensors_event_t pressureEvent;
+  bmp.getEvent(&pressureEvent);
+  if (pressureEvent.pressure) {
+    Serial.print(F("Pressure: "));
+    Serial.print(pressureEvent.pressure);
+    Serial.println(F(" hPa"));
+  } else {
+    Serial.println("Sensor error");
+  }
+}
