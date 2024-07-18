@@ -1,0 +1,39 @@
+// Define pins
+const int pirPin = 7;        // PIR motion sensor connected to pin 7
+const int buzzerPin = 8;     // Buzzer connected to pin 8
+const int ledPin = 9;        // LED connected to pin 9
+
+void setup() {
+  // Initialize the serial communication
+  Serial.begin(9600);
+
+  // Initialize the PIR sensor pin as input
+  pinMode(pirPin, INPUT);
+
+  // Initialize the buzzer and LED pins as output
+  pinMode(buzzerPin, OUTPUT);
+  pinMode(ledPin, OUTPUT);
+
+  // Ensure buzzer and LED are off at the start
+  digitalWrite(buzzerPin, LOW);
+  digitalWrite(ledPin, LOW);
+}
+
+void loop() {
+  // Read the PIR sensor output
+  int pirState = digitalRead(pirPin);
+
+  if (pirState == HIGH) {
+    // Motion detected
+    Serial.println("Motion detected!");
+    digitalWrite(buzzerPin, HIGH); // Turn on buzzer
+    digitalWrite(ledPin, HIGH);    // Turn on LED
+  } else {
+    // No motion detected
+    digitalWrite(buzzerPin, LOW);  // Turn off buzzer
+    digitalWrite(ledPin, LOW);     // Turn off LED
+  }
+
+  // Wait for a second before checking again
+  delay(1000);
+}
